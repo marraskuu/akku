@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -62,14 +63,30 @@ TEMPLATES = [
     }
 ]
 
+_db_url = urlsplit(os.environ.get("MYSQL_URL") or os.environ.get("DATABASE_URL") or "")
+
+
+def _db_setting(*names, url_value, default):
+    for name in names:
+        value = os.environ.get(name, "").strip()
+        if value:
+            return value
+    return url_value or default
+
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get("MYSQLDATABASE") or os.environ.get("MYSQL_DATABASE", "akku"),
-        "USER": os.environ.get("MYSQLUSER") or os.environ.get("MYSQL_USER", "akku"),
-        "PASSWORD": os.environ.get("MYSQLPASSWORD") or os.environ.get("MYSQL_PASSWORD", ""),
-        "HOST": os.environ.get("MYSQLHOST") or os.environ.get("MYSQL_HOST", "127.0.0.1"),
-        "PORT": os.environ.get("MYSQLPORT") or os.environ.get("MYSQL_PORT", "3306"),
+        "NAME": _db_setting(
+            "MYSQLDATABASE", "MYSQL_DATABASE", url_value=_db_url.path.lstrip("/"), default="railway"
+        ),
+        "USER": _db_setting("MYSQLUSER", "MYSQL_USER", url_value=unquote(_db_url.username or ""), default="root"),
+        "PASSWORD": _db_setting(
+            "MYSQLPASSWORD", "MYSQL_PASSWORD", "MYSQL_ROOT_PASSWORD",
+            url_value=unquote(_db_url.password or ""), default="",
+        ),
+        "HOST": _db_setting("MYSQLHOST", "MYSQL_HOST", url_value=_db_url.hostname, default="127.0.0.1"),
+        "PORT": _db_setting("MYSQLPORT", "MYSQL_PORT", url_value=_db_url.port and str(_db_url.port), default="3306"),
         "CONN_MAX_AGE": 60,
         "OPTIONS": {"charset": "utf8mb4"},
     }
