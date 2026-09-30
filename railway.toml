@@ -4,6 +4,6 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60"
-releaseCommand = "python manage.py migrate --noinput"
+preDeployCommand = ["python manage.py predeploy"]
 healthcheckPath = "/health/"
-healthcheckTimeout = 30
+healthcheckTimeout = 120
