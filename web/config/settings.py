@@ -108,3 +108,10 @@ CSRF_COOKIE_SECURE = not DEBUG
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2_000_000
 
 INGEST_TOKEN = os.environ.get("INGEST_TOKEN", "")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "WARNING"},
+}
