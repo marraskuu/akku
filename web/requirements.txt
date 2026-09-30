@@ -1,0 +1,4 @@
+Django>=5.2,<6
+gunicorn>=23
+whitenoise>=6.7
+PyMySQL>=1.1

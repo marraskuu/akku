@@ -1,0 +1,17 @@
+{% extends "telemetry/base.html" %}
+{% block title %}Kirjaudu · Akku{% endblock %}
+{% block content %}
+  <section class="panel narrow">
+    <h1>Kirjaudu</h1>
+    <p>Puhelinten akku- ja käyttötiedot.</p>
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <p class="warn">{{ form.non_field_errors }}</p>
+      {% endif %}
+      <label>Käyttäjätunnus <input name="username" autofocus required></label>
+      <label>Salasana <input name="password" type="password" required></label>
+      <button type="submit">Jatka</button>
+    </form>
+  </section>
+{% endblock %}

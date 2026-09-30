@@ -1,0 +1,120 @@
+{% extends "telemetry/base.html" %}
+{% load telemetry_tags %}
+{% block title %}{{ device.display_name }} · Akku{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <p class="back"><a href="{% url 'devices' %}">Puhelimet</a></p>
+    <h1>{{ device.display_name }}</h1>
+    {% if device.label %}<p class="muted">{{ device.id }}</p>{% endif %}
+    <div class="range">
+      <a href="?range=24h" {% if span == "24h" %}class="on"{% endif %}>24 h</a>
+      <a href="?range=7d" {% if span == "7d" %}class="on"{% endif %}>7 päivää</a>
+    </div>
+  </div>
+
+  {% if missing_usage %}
+    <p class="warn">Käyttöhistoria ei ole käytössä puhelimessa, joten sovellusjako on puutteellinen.</p>
+  {% endif %}
+
+  <section class="stats">
+    <article>
+      <span>Kulutus</span>
+      <strong>{{ screen.measured|mah }} mAh</strong>
+    </article>
+    <article>
+      <span>Näyttö päällä</span>
+      <strong>{{ screen.interactive|duration }}</strong>
+    </article>
+    <article>
+      <span>Always On Display</span>
+      <strong>{{ screen.aod|duration }}</strong>
+    </article>
+    <article>
+      <span>Lukitusnäyttö</span>
+      <strong>{{ screen.locked|duration }}</strong>
+    </article>
+    <article>
+      <span>Kirkkaus</span>
+      <strong>{% if screen.brightness is not None %}{{ screen.brightness|number }}{% else %}–{% endif %}</strong>
+    </article>
+    <article>
+      <span>Vähän muistia</span>
+      <strong>{{ screen.low_memory|duration }}</strong>
+    </article>
+  </section>
+
+  <div class="charts">
+    <section class="panel">
+      <h2>Varaustaso</h2>
+      {% if level_chart %}
+        <svg viewBox="0 0 640 140" role="img" aria-label="Varaustaso">
+          <polyline points="{{ level_chart.points }}" />
+        </svg>
+        <p class="axis">{{ level_chart.low|number }}–{{ level_chart.high|number }} %</p>
+      {% else %}
+        <p>Ei näytteitä tällä aikavälillä.</p>
+      {% endif %}
+    </section>
+    <section class="panel">
+      <h2>Vapaa muisti</h2>
+      <p class="muted">Koko puhelimen vapaa RAM. Sovelluskohtaista muistia Android ei anna lukea.</p>
+      {% if memory_chart %}
+        <svg viewBox="0 0 640 140" role="img" aria-label="Vapaa muisti">
+          <polyline points="{{ memory_chart.points }}" />
+        </svg>
+        <p class="axis">{{ memory_chart.low|number }}–{{ memory_chart.high|number }} Mt</p>
+      {% else %}
+        <p>Ei muistitietoja tällä aikavälillä.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>Sovellukset</h2>
+    <p class="muted">Arvioitu kulutus on skaalattu puhelimen mitattuun purkautumiseen. Järjestelmän osuus {{ screen.system|mah }} mAh.{% if confidence %} Lähde: {{ confidence }}.{% endif %}</p>
+    {% if not apps %}
+      <p>Ei sovellusdataa tällä aikavälillä.</p>
+    {% else %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Sovellus</th>
+              <th>mAh</th>
+              <th>Etualalla</th>
+              <th>Kamera</th>
+              <th>Salama</th>
+              <th>Verkko</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for app in apps %}
+              <tr>
+                <td>
+                  <div>{{ app.package }}</div>
+                  <div class="bar"><span style="width: {% widthratio app.mah max_mah 100 %}%"></span></div>
+                  {% if app.top_activity %}<div class="muted">{{ app.top_activity }}</div>{% endif %}
+                  {% if app.activities %}
+                    <details>
+                      <summary>Activityt</summary>
+                      <ul>
+                        {% for activity in app.activities %}
+                          <li>{{ activity.class_name }} · {{ activity.mah|mah }} mAh · {{ activity.foreground|duration }}</li>
+                        {% endfor %}
+                      </ul>
+                    </details>
+                  {% endif %}
+                </td>
+                <td>{{ app.mah|mah }}</td>
+                <td>{{ app.foreground|duration }}</td>
+                <td>{{ app.camera|duration }}</td>
+                <td>{{ app.torch|duration }}</td>
+                <td>{{ app.rx|bytesize }} / {{ app.tx|bytesize }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

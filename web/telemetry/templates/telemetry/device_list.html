@@ -1,0 +1,46 @@
+{% extends "telemetry/base.html" %}
+{% load telemetry_tags %}
+{% block title %}Puhelimet · Akku{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <h1>Puhelimet</h1>
+    <p>Tämän päivän näyttöaika, kulutus ja vapaan muistin minimi. Muisti on koko laitteen RAM, ei sovelluksen.</p>
+  </div>
+  {% if not rows %}
+    <section class="panel">
+      <h2>Ei puhelimia</h2>
+      <p>Agentti lähettää ensimmäisen raportin, kun ensimmäinen täysi tunti on kulunut.</p>
+    </section>
+  {% else %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Puhelin</th>
+            <th>Taso</th>
+            <th>Näyttö tänään</th>
+            <th>Kulutus tänään</th>
+            <th>Vapaa muisti min</th>
+            <th>Kuultu</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              <td>
+                <a href="{% url 'device' row.device.id %}">{{ row.device.display_name }}</a>
+                {% if row.device.label %}<div class="muted">{{ row.device.id }}</div>{% endif %}
+                {% if row.stale %}<span class="badge">Ei yhteyttä</span>{% endif %}
+              </td>
+              <td>{% if row.device.last_level is not None %}{{ row.device.last_level }} %{% else %}–{% endif %}</td>
+              <td>{{ row.screen|duration }}</td>
+              <td>{{ row.mah|mah }} mAh</td>
+              <td>{% if row.memory is not None %}{{ row.memory|number }} Mt{% else %}–{% endif %}</td>
+              <td>{% if row.device.last_seen %}{{ row.device.last_seen|date:"j.n. H:i" }}{% else %}–{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+{% endblock %}
